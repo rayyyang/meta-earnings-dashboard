@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>META Platforms — Q4 2025 Post-Earnings Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0e1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --teal: #20808d;
+    --teal-light: #4fa8b0;
+    --navy: #1f4e79;
+    --green: #3fb950;
+    --red: #f85149;
+    --amber: #d29922;
+    --gold: #e3b341;
+    --blue: #58a6ff;
+    --purple: #bc8cff;
+    --orange: #ffa657;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #0a1929 0%, #1a2744 50%, #0d2137 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .ticker-badge {
+    background: var(--teal);
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+  }
+  .company-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .sub-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .price-block {
+    text-align: right;
+  }
+  .price-main {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+  }
+  .price-change {
+    font-size: 13px;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .report-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── KPI Strip ── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+    border-bottom: 2px solid var(--teal);
+    margin-top: 14px;
+  }
+  .kpi-cell {
+    background: var(--surface);
+    padding: 10px 14px;
+    cursor: default;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .kpi-cell:hover {
+    background: var(--surface2);
+  }
+  .kpi-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .kpi-value {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+  }
+  .kpi-delta {
+    font-size: 10px;
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .delta-up { color: var(--green); }
+  .delta-down { color: var(--red); }
+  .delta-neutral { color: var(--amber); }
+  .beat-badge {
+    display: inline-block;
+    background: rgba(63, 185, 80, 0.15);
+    color: var(--green);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-top: 2px;
+  }
+  .miss-badge {
+    display: inline-block;
+    background: rgba(248, 81, 73, 0.15);
+    color: var(--red);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-top: 2px;
+  }
+  .warn-badge {
+    display: inline-block;
+    background: rgba(210, 153, 34, 0.15);
+    color: var(--amber);
+    border: 1px solid rgba(210, 153, 34, 0.3);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-top: 2px;
+  }
+
+  /* ── Layout ── */
+  .main {
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .full-width { grid-column: 1 / -1; }
+  .col-3 { grid-column: span 2; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .card-header {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+  }
+  .card-tag {
+    font-size: 10px;
+    color: var(--teal);
+    font-weight: 500;
+  }
+  .card-body {
+    padding: 14px;
+  }
+
+  /* ── Charts ── */
+  .chart-container {
+    position: relative;
+    height: 200px;
+  }
+  .chart-container-sm {
+    position: relative;
+    height: 160px;
+  }
+  .chart-container-lg {
+    position: relative;
+    height: 240px;
+  }
+
+  /* ── Custom Tooltip ── */
+  .custom-tooltip {
+    position: fixed;
+    background: rgba(22, 27, 34, 0.97);
+    border: 1px solid var(--teal);
+    border-radius: 8px;
+    padding: 12px 14px;
+    max-width: 300px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 9999;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .tooltip-period {
+    font-weight: 700;
+    color: var(--teal);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .tooltip-value {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .tooltip-vs {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .tooltip-insight {
+    font-size: 11.5px;
+    color: #c9d1d9;
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+    margin-top: 4px;
+  }
+
+  /* ── Data Tables ── */
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .data-table th {
+    text-align: right;
+    padding: 5px 8px;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table th:first-child { text-align: left; }
+  .data-table td {
+    padding: 5px 8px;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+  }
+  .data-table td:first-child {
+    text-align: left;
+    font-family: var(--font);
+    color: var(--muted);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .num-green { color: var(--green); font-weight: 500; }
+  .num-red { color: var(--red); font-weight: 500; }
+  .num-amber { color: var(--amber); }
+  .num-blue { color: var(--blue); font-weight: 600; }
+  .row-total td { border-top: 1px solid var(--border); font-weight: 700; color: var(--text) !important; font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Debate / Thesis Box ── */
+  .debate-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  .debate-col { }
+  .debate-heading {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .debate-bull { background: rgba(63,185,80,0.15); color: var(--green); }
+  .debate-bear { background: rgba(248,81,73,0.15); color: var(--red); }
+  .debate-unresolved { background: rgba(210,153,34,0.15); color: var(--amber); }
+  .debate-item {
+    font-size: 11px;
+    color: var(--muted);
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(48,54,61,0.4);
+    line-height: 1.4;
+  }
+  .debate-item:last-child { border-bottom: none; }
+
+  /* ── Guidance Box ── */
+  .guidance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .guidance-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .g-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .g-value {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+  }
+  .g-note {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .g-beat { border-left: 3px solid var(--green); }
+  .g-warn { border-left: 3px solid var(--red); }
+  .g-neutral { border-left: 3px solid var(--amber); }
+
+  /* ── Action Banner ── */
+  .action-banner {
+    background: linear-gradient(135deg, rgba(31, 78, 121, 0.4) 0%, rgba(32, 128, 141, 0.2) 100%);
+    border: 1px solid var(--teal);
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .action-main {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 0.5px;
+  }
+  .action-conviction {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .action-details {
+    font-size: 12px;
+    color: var(--muted);
+    max-width: 500px;
+    line-height: 1.5;
+  }
+  .action-pt-block {
+    text-align: right;
+  }
+  .action-pt-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .action-pt-value { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--teal); }
+  .action-pt-note { font-size: 10px; color: var(--green); }
+
+  /* ── Analyst section ── */
+  .analyst-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(48,54,61,0.4);
+    font-size: 11px;
+  }
+  .analyst-item:last-child { border-bottom: none; }
+  .analyst-firm { color: var(--text); font-weight: 500; }
+  .analyst-action { color: var(--muted); font-size: 10px; }
+  .analyst-pt { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .full-width { grid-column: 1; }
+    .kpi-strip { grid-template-columns: repeat(4, 1fr); }
+    .debate-grid { grid-template-columns: 1fr; }
+    .guidance-grid { grid-template-columns: 1fr; }
+    .action-banner { flex-direction: column; }
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Section dividers ── */
+  .section-label {
+    grid-column: 1 / -1;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--teal);
+    padding: 6px 0 2px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <span class="ticker-badge">META</span>
+      <div>
+        <div class="company-name">Meta Platforms, Inc.</div>
+        <div class="sub-label">Q4 2025 Post-Earnings Dashboard &nbsp;|&nbsp; Earnings Date: Jan 28, 2026 &nbsp;|&nbsp; Communication Services</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="price-block">
+        <div class="price-main">$668.73</div>
+        <div style="color:var(--green);font-size:13px;margin-top:4px;">Post-earnings: $738.31 (+10.4%)</div>
+        <div style="color:var(--muted);font-size:11px;">Jan 28, 2026 close (earnings day)</div>
+        <div class="price-change">+$7.10 (+1.24%) &nbsp;|&nbsp; +0.10% post-earnings (1D)</div>
+      </div>
+      <span class="report-tag">Report: Apr 2, 2026</span>
+    </div>
+  </div>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi-cell">
+      <div class="kpi-label">Q4 Revenue</div>
+      <div class="kpi-value">$59.9B</div>
+      <div class="kpi-delta delta-up">+24.0% YoY</div>
+      <div class="beat-badge">BEAT +2.7%</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">EPS Diluted</div>
+      <div class="kpi-value">$8.88</div>
+      <div class="kpi-delta delta-up">+10.7% vs Q4'24</div>
+      <div class="beat-badge">BEAT +8.2%</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Op. Margin</div>
+      <div class="kpi-value">41.3%</div>
+      <div class="kpi-delta delta-up">+530bps YoY</div>
+      <div class="beat-badge">BEAT</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">FCF</div>
+      <div class="kpi-value">$14.1B</div>
+      <div class="kpi-delta delta-neutral">23.5% margin</div>
+      <div class="beat-badge">BEAT</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Family DAP</div>
+      <div class="kpi-value">3.58B</div>
+      <div class="kpi-delta delta-up">+7% YoY</div>
+      <div class="beat-badge">BEAT</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">ARPP (Global)</div>
+      <div class="kpi-value">$16.56</div>
+      <div class="kpi-delta delta-up">+16.2% YoY</div>
+      <div class="beat-badge">BEAT</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Q4 CapEx</div>
+      <div class="kpi-value">$22.1B</div>
+      <div class="kpi-delta delta-down">FY'26 guide $115-135B</div>
+      <div class="miss-badge">SHOCK</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">RL Op. Loss</div>
+      <div class="kpi-value">$(6.0)B</div>
+      <div class="kpi-delta delta-neutral">Peak declared</div>
+      <div class="warn-badge">PEAK</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Market Cap</div>
+      <div class="kpi-value">$1.69T</div>
+      <div class="kpi-delta delta-neutral">P/E 28.4x TTM</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Net Cash</div>
+      <div class="kpi-value">$22.9B</div>
+      <div class="kpi-delta delta-neutral">$81.6B cash, $58.7B debt</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip element -->
+<div class="custom-tooltip" id="customTooltip">
+  <div class="tooltip-period" id="ttPeriod"></div>
+  <div class="tooltip-value" id="ttValue"></div>
+  <div class="tooltip-vs" id="ttVs"></div>
+  <div class="tooltip-insight" id="ttInsight"></div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<div class="main">
+
+  <!-- Section: Revenue & Growth -->
+  <div class="section-label">Revenue & Growth</div>
+
+  <!-- Revenue 8Q Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Total Revenue (8 Quarters)</span>
+      <span class="card-tag">+24% YoY Q4</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartRevenue"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- YoY Growth Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Revenue YoY Growth % (8 Quarters)</span>
+      <span class="card-tag">Re-accelerating</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartGrowth"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Profitability -->
+  <div class="section-label">Profitability & Margins</div>
+
+  <!-- Margins Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Gross / Op / Net Margins (8 Quarters)</span>
+      <span class="card-tag">Structurally improving</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartMargins"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- EPS Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">EPS Diluted — Actual vs Consensus (8Q)</span>
+      <span class="card-tag">Beat every quarter</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartEPS"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Cash Flow & CapEx -->
+  <div class="section-label">Cash Flow & Capital Allocation</div>
+
+  <!-- FCF Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Free Cash Flow & CapEx (8Q, $B)</span>
+      <span class="card-tag">CapEx surge 2025</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartFCF"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Balance Sheet -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Balance Sheet — Cash & Debt (8Q, $B)</span>
+      <span class="card-tag">Q4: $81.6B cash, $58.7B debt</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartBS"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Segments -->
+  <div class="section-label">Segment Performance</div>
+
+  <!-- Segment Revenue Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Segment Revenue — FoA vs Reality Labs (8Q, $B)</span>
+      <span class="card-tag">RL losses peaking</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartSegRev"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Segment Op Income -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Segment Operating Income (8Q, $B)</span>
+      <span class="card-tag">FoA margin 52% Q4</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartSegOI"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: User Metrics & Ad KPIs -->
+  <div class="section-label">User Metrics & Ad KPIs</div>
+
+  <!-- DAP Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Family DAP & ARPP (8 Quarters)</span>
+      <span class="card-tag">3.58B DAP, $16.56 ARPP Q4</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartDAP"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ad Volume / Price -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Ad Volume vs Price Growth YoY % (8Q)</span>
+      <span class="card-tag">Volume accelerating</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartAdKPIs"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Geography -->
+  <div class="section-label">Geographic Breakdown</div>
+
+  <!-- Geo Revenue Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Ad Revenue by Geography Q4 2025 ($B)</span>
+      <span class="card-tag">US/Canada 44% of mix</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container-sm">
+        <canvas id="chartGeo"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Beat/Miss table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Beat/Miss History (8 Quarters)</span>
+      <span class="card-tag">8 consecutive revenue beats</span>
+    </div>
+    <div class="card-body" style="padding:8px;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Actual Rev</th>
+            <th>Cons Rev</th>
+            <th>Rev Beat</th>
+            <th>Actual EPS</th>
+            <th>EPS Beat</th>
+            <th>1D Move</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Q4 2025</td><td class="num-blue">$59.9B</td><td>$58.3B</td><td class="num-green">+$1.6B</td><td class="num-blue">$8.88</td><td class="num-green">+$0.67</td><td class="num-green">+0.1%</td></tr>
+          <tr><td>Q3 2025</td><td>$51.2B</td><td>$49.5B</td><td class="num-green">+$1.7B</td><td>$7.25</td><td class="num-green">+$0.64</td><td class="num-red">-11.3%</td></tr>
+          <tr><td>Q2 2025</td><td>$47.5B</td><td>$44.8B</td><td class="num-green">+$2.7B</td><td>$7.14</td><td class="num-green">+$1.31</td><td class="num-green">+11.3%</td></tr>
+          <tr><td>Q1 2025</td><td>$42.3B</td><td>$41.3B</td><td class="num-green">+$1.0B</td><td>$6.43</td><td class="num-green">+$1.21</td><td class="num-green">+4.2%</td></tr>
+          <tr><td>Q4 2024</td><td>$48.4B</td><td>$47.0B</td><td class="num-green">+$1.4B</td><td>$8.02</td><td class="num-green">+$1.34</td><td class="num-green">+1.6%</td></tr>
+          <tr><td>Q3 2024</td><td>$40.6B</td><td>$40.2B</td><td class="num-green">+$0.4B</td><td>$6.03</td><td class="num-green">+$0.84</td><td class="num-red">-4.1%</td></tr>
+          <tr><td>Q2 2024</td><td>$39.1B</td><td>$38.3B</td><td class="num-green">+$0.8B</td><td>$5.16</td><td class="num-green">+$0.46</td><td class="num-green">+4.8%</td></tr>
+          <tr class="row-total"><td>Q1 2024</td><td>$36.5B</td><td>$36.2B</td><td class="num-green">+$0.3B</td><td>$4.71</td><td class="num-green">+$0.21</td><td class="num-green">+0.9%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Section: Guidance & Estimates -->
+  <div class="section-label">Guidance & Forward Estimates</div>
+
+  <!-- Guidance Box -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Management Guidance — Q1 2026 & FY2026</span>
+      <span class="card-tag">Beat core; CapEx shock</span>
+    </div>
+    <div class="card-body">
+      <div class="guidance-grid">
+        <div class="guidance-item g-neutral">
+          <div class="g-label">Q1 2026 Revenue Guide</div>
+          <div class="g-value">$53.5–56.5B</div>
+          <div class="g-note">Cons: ~$55.4B | +4% FX tailwind | In-line</div>
+        </div>
+        <div class="guidance-item g-warn">
+          <div class="g-label">FY2026 CapEx Guide</div>
+          <div class="g-value">$115–135B</div>
+          <div class="g-note">Street expected ~$65B — nearly 2x shock. AI infra peak.</div>
+        </div>
+        <div class="guidance-item g-beat">
+          <div class="g-label">FY2026 Operating Income</div>
+          <div class="g-value">&gt; FY2025 ($83.4B)</div>
+          <div class="g-note">Implies 35-37% op. margin despite expense ramp</div>
+        </div>
+        <div class="guidance-item g-neutral">
+          <div class="g-label">FY2026 Total Expenses</div>
+          <div class="g-value">$162–169B</div>
+          <div class="g-note">Street ~$155B | Infra + AI talent headcount</div>
+        </div>
+        <div class="guidance-item g-neutral">
+          <div class="g-label">Reality Labs Op. Loss FY2026</div>
+          <div class="g-value">~$(17)B</div>
+          <div class="g-note">Similar to 2025 — declared as PEAK losses year</div>
+        </div>
+        <div class="guidance-item g-neutral">
+          <div class="g-label">FY2026 Tax Rate</div>
+          <div class="g-value">13–16%</div>
+          <div class="g-note">Stable; EU settlements could disrupt</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forward Estimates Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Consensus Forward Estimates (Rev, EPS)</span>
+      <span class="card-tag">FY2026E Rev ~$250B</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chartEstimates"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Debate & Thesis -->
+  <div class="section-label">Bull/Bear Debate Monitor</div>
+
+  <div class="card full-width">
+    <div class="card-header">
+      <span class="card-title">Thesis Debate Tracker — Post Q4 2025</span>
+      <span class="card-tag">Thesis: Intact / Strengthened</span>
+    </div>
+    <div class="card-body">
+      <div class="debate-grid">
+        <div class="debate-col">
+          <div class="debate-heading debate-bull">🐂 BULL CASE (STRENGTHENED)</div>
+          <div class="debate-item">Ad revenue re-accelerating: +24% YoY with both volume (+18%) and price (+6%) growing simultaneously</div>
+          <div class="debate-item">DAP 3.58B — FB and WA each >2B DAU/day; engagement compounding with AI</div>
+          <div class="debate-item">Reality Labs losses declared peak; AI glasses 3x YoY — next platform in sight</div>
+          <div class="debate-item">WhatsApp $2B ARR paid messaging scaling; Status ads global rollout begun</div>
+          <div class="debate-item">AI ad tools: $10B run-rate video gen; +24% incremental conversion lift</div>
+          <div class="debate-item">Op. income >$83.4B guided for 2026 despite $115-135B CapEx</div>
+        </div>
+        <div class="debate-col">
+          <div class="debate-heading debate-bear">🐻 BEAR CASE (ONGOING)</div>
+          <div class="debate-item">$115-135B CapEx doubles prior estimates — FCF compressed to $20-30B in 2026E vs. $45B 2025</div>
+          <div class="debate-item">No explicit ROIC target for AI buildout — faith-based investment cycle</div>
+          <div class="debate-item">EU regulatory risk: LPA changes + DMA enforcement could structurally reduce ARPU</div>
+          <div class="debate-item">US youth litigation: "material" financial loss possible — unquantified tail risk</div>
+          <div class="debate-item">Price/ad growth decelerated: Q4 +6% vs Q1 +10% — could signal ad market maturation</div>
+          <div class="debate-item">Stock at $668 pre-earnings ($738 post) vs $796 52-wk high; -16% off peak; gap-open absorbed the CapEx shock</div>
+        </div>
+        <div class="debate-col">
+          <div class="debate-heading debate-unresolved">⚖️ UNRESOLVED (WATCH)</div>
+          <div class="debate-item">Will $115-135B CapEx generate monetizable AI capabilities within 18-24 months?</div>
+          <div class="debate-item">Threads ad revenue — first quantification expected Q1 2026 earnings</div>
+          <div class="debate-item">WhatsApp Status ads ramp — pace of ad load increase matters for ARPU</div>
+          <div class="debate-item">Meta Superintelligence Labs models — when do they ship and monetize?</div>
+          <div class="debate-item">Off-balance-sheet data center "new ownership structures" — need more disclosure</div>
+          <div class="debate-item">Tariff/macro risk: Meta 97%+ ad revenue = high cyclical exposure to ad pullback</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: PM Action -->
+  <div class="section-label">PM Action & Analyst Targets</div>
+
+  <div class="card" style="grid-column: 1 / -1;">
+    <div class="card-header">
+      <span class="card-title">Investment Action Summary</span>
+      <span class="card-tag">As of April 2, 2026</span>
+    </div>
+    <div class="card-body">
+      <div class="action-banner">
+        <div>
+          <div class="action-main">ADD MODESTLY ON WEAKNESS</div>
+          <div class="action-conviction">Conviction: 4/5 &nbsp;|&nbsp; vs. Prior: Unchanged &nbsp;|&nbsp; Drift: Neutral</div>
+        </div>
+        <div class="action-details">
+          Stock gapped +10.4% on earnings to $738.31 (earnings-day close: $668.73). At $738, META trades at 17.3x FY2026E EPS ($42.62 consensus) — reasonable given 24%+ revenue growth. CapEx shock is now a known-known; market absorbed it. Add on pullbacks toward $680-700. Exit risk: CapEx revised to $150B+ or revenue growth &lt;10% YoY.
+        </div>
+        <div class="action-pt-block">
+          <div class="action-pt-label">Base Case PT (12M)</div>
+          <div class="action-pt-value">$880</div>
+          <div class="action-pt-note">+17% upside from post-earnings $738</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analyst Targets -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Analyst Price Targets (Post Q4 2025)</span>
+      <span class="card-tag">Avg $864 | 94% Bullish</span>
+    </div>
+    <div class="card-body">
+      <div class="analyst-item">
+        <span class="analyst-firm">Rosenblatt (Crockett)</span>
+        <span class="analyst-action">Buy — Maintained</span>
+        <span class="analyst-pt" style="color:var(--green);">$1,144</span>
+      </div>
+      <div class="analyst-item">
+        <span class="analyst-firm">Evercore ISI (Mahaney)</span>
+        <span class="analyst-action">Outperform — Maintained</span>
+        <span class="analyst-pt" style="color:var(--green);">$900</span>
+      </div>
+      <div class="analyst-item">
+        <span class="analyst-firm">Wedbush (Devitt)</span>
+        <span class="analyst-action">Outperform — Maintained</span>
+        <span class="analyst-pt" style="color:var(--green);">$900</span>
+      </div>
+      <div class="analyst-item">
+        <span class="analyst-firm">BofA (Post)</span>
+        <span class="analyst-action">Buy — Raised from $810</span>
+        <span class="analyst-pt" style="color:var(--teal);">$885</span>
+      </div>
+      <div class="analyst-item">
+        <span class="analyst-firm">Piper Sandler (Champion)</span>
+        <span class="analyst-action">Overweight — Raised from $840</span>
+        <span class="analyst-pt" style="color:var(--teal);">$880</span>
+      </div>
+      <div class="analyst-item">
+        <span class="analyst-firm">Cantor Fitzgerald</span>
+        <span class="analyst-action">Overweight — Raised from $750</span>
+        <span class="analyst-pt" style="color:var(--teal);">$860</span>
+      </div>
+      <div class="analyst-item">
+        <span class="analyst-firm">Morgan Stanley (Nowak)</span>
+        <span class="analyst-action">Overweight — Lowered from $825</span>
+        <span class="analyst-pt" style="color:var(--amber);">$775</span>
+      </div>
+      <div class="analyst-item">
+        <span class="analyst-firm">Scotiabank (Schindler)</span>
+        <span class="analyst-action">Sector Perform — Neutral</span>
+        <span class="analyst-pt" style="color:var(--red);">$700</span>
+      </div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;">
+        <span style="color:var(--muted);">Consensus Average: <strong style="color:var(--text);">$864</strong></span>
+        <span style="color:var(--muted);">vs Post-Earnings $738: <strong style="color:var(--green);">+17% upside</strong></span>
+        <span style="color:var(--muted);">17/18 Bullish (<strong style="color:var(--green);">94%</strong>)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estimate table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Forward Consensus Estimates</span>
+      <span class="card-tag">FY2026E EPS $42.62</span>
+    </div>
+    <div class="card-body" style="padding:8px;">
+      <table class="data-table">
+        <thead>
+          <tr><th>Period</th><th>Rev Est</th><th>EBITDA Est</th><th>EPS Est</th><th>YoY Rev%</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Q1 2026E</td><td>$55.5B</td><td>$31.1B</td><td class="num-blue">$9.48</td><td class="num-green">+31%</td></tr>
+          <tr><td>Q2 2026E</td><td>$59.6B</td><td>$34.2B</td><td class="num-blue">$10.70</td><td class="num-green">+25%</td></tr>
+          <tr><td>Q3 2026E</td><td>$62.9B</td><td>$35.4B</td><td class="num-blue">$10.47</td><td class="num-green">+23%</td></tr>
+          <tr><td>Q4 2026E</td><td>$73.0B</td><td>$41.2B</td><td class="num-blue">$11.97</td><td class="num-green">+22%</td></tr>
+          <tr class="row-total"><td><strong>FY2026E</strong></td><td class="num-blue">$250.8B</td><td class="num-blue">$141.9B</td><td class="num-blue">$42.62</td><td class="num-green">+21%</td></tr>
+          <tr><td>FY2027E</td><td>$296.1B</td><td>$171.0B</td><td>$51.75</td><td class="num-green">+18%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Footer -->
+<div style="padding:14px 20px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted);">
+  <span>Sources: Meta Platforms Q4 2025 Earnings Release (Jan 28, 2026) &nbsp;|&nbsp; <a href="https://investor.meta.com" style="color:var(--teal);">investor.meta.com</a> &nbsp;|&nbsp; <a href="https://perplexity.ai/finance/META" style="color:var(--teal);">perplexity.ai/finance/META</a></span>
+  <span>Hover over chart data points for contextual insights from filings &amp; transcripts &nbsp;|&nbsp; Dashboard: April 2, 2026</span>
+</div>
+
+<script>
+// ── Chart defaults ──────────────────────────────────────────────────────────
+Chart.defaults.color = '#8b949e';
+Chart.defaults.font.family = "'JetBrains Mono', 'Inter', system-ui";
+Chart.defaults.font.size = 10;
+Chart.defaults.plugins.legend.labels.boxWidth = 10;
+Chart.defaults.plugins.legend.labels.padding = 12;
+
+const TEAL = '#20808d';
+const TEAL2 = '#4fa8b0';
+const NAVY = '#1f4e79';
+const GREEN = '#3fb950';
+const RED = '#f85149';
+const AMBER = '#d29922';
+const BLUE = '#58a6ff';
+const PURPLE = '#bc8cff';
+const ORANGE = '#ffa657';
+const GRID = 'rgba(48,54,61,0.5)';
+
+const quarters = ['Q1\'24','Q2\'24','Q3\'24','Q4\'24','Q1\'25','Q2\'25','Q3\'25','Q4\'25'];
+
+// ── Tooltip data ─────────────────────────────────────────────────────────────
+const revenueInsights = {
+  "Q1'24": {value:"$36.5B", vs:"Cons $36.2B | Beat ~1%", insight:"Advertising recovery accelerating. R&D $10.0B (+15% YoY). Year of Efficiency dividend visible in op. margin expansion to 37.9%."},
+  "Q2'24": {value:"$39.1B", vs:"Cons $38.3B | Beat +2.1%", insight:"Impression volume +10% YoY, price/ad +10% — both legs growing. Instagram and Reels engagement driving outsized monetization."},
+  "Q3'24": {value:"$40.6B", vs:"Cons $40.2B | Thin beat", insight:"Revenue growth modest but consistent. Asia-Pacific impressions +9%. Began flagging AI compute investment needs."},
+  "Q4'24": {value:"$48.4B", vs:"Cons $47.0B | Beat +2.9%", insight:"Holiday season + AI ad improvements drive record Q4. Op. margin 48.3% — highest since IPO at that point. EPS $8.02 +65%."},
+  "Q1'25": {value:"$42.3B", vs:"Cons $41.3B | Beat +2.4%", insight:"Strong start to 2025. Price/ad +10% YoY. DAP 3.43B. Management first quantified Meta AI reach of 900M+ MAU."},
+  "Q2'25": {value:"$47.5B", vs:"Cons $44.8B | Beat +6.0% — BIG", insight:"Massive beat surprised market. Revenue $2.7B above consensus. Stock +11.3% next day. AI ad tools clearly monetizing."},
+  "Q3'25": {value:"$51.2B", vs:"Cons $49.5B | Beat +3.5%", insight:"Solid beat but stock fell -11.3% on CapEx guidance spike. First signal of $115-135B 2026 CapEx cycle. Reality Labs RL: Quest 3S pull-forward."},
+  "Q4'25": {value:"$59.9B", vs:"Cons $58.3B | Beat +2.7%", insight:"Record revenue. Ad impressions +18%, price/ad +6%. 3.5B+ DAP. Video gen tools $10B run-rate. CapEx $22.1B — FY2026 guide $115-135B."},
+};
+
+const epsInsights = {
+  "Q1'24": {value:"$4.71 actual vs $4.50 est", insight:"Beat by $0.21. Year of Efficiency benefits fully materializing. Tax rate aided."},
+  "Q2'24": {value:"$5.16 actual vs $4.70 est", insight:"Beat by $0.46. Gross margin 81.3%. SBC $4.6B elevated. Buybacks $6.3B."},
+  "Q3'24": {value:"$6.03 actual vs $5.19 est", insight:"Beat by $0.84. Largest EPS beat at that point. AI ad systems delivering clear conversion lifts."},
+  "Q4'24": {value:"$8.02 actual vs $6.68 est", insight:"Beat by $1.34. Blockbuster Q4. Op. margin 48.3%. Strong holiday ad demand. Tax 10% favorable."},
+  "Q1'25": {value:"$6.43 actual vs $5.22 est", insight:"Beat by $1.21. Seasonal step-down from Q4 normal. Expense growth controlled despite AI hiring."},
+  "Q2'25": {value:"$7.14 actual vs $5.83 est", insight:"Beat by $1.31. Large EPS beat drove +11.3% stock move. AI creative tools running hot."},
+  "Q3'25": {value:"$7.25 actual vs $6.61 est", insight:"Note: GAAP net income $2.7B due to large tax accrual. Non-GAAP was $18.6B. EPS $1.05 GAAP vs $7.25 non-GAAP. CapEx shock overshadowed."},
+  "Q4'25": {value:"$8.88 actual vs $8.21 est", insight:"Beat by $0.67 (+8.2%). EPS +10.7% vs Q4'24. Tax 10% — favorable settlement with tax authorities. FCF $14.1B."},
+};
+
+const marginInsights = {
+  "Q1'24": "Gross 81.8% | Op 37.9% | Net 33.9%. 'Year of Efficiency' still benefiting margin structure.",
+  "Q2'24": "Gross 81.3% | Op 38.0% | Net 34.5%. SG&A elevated due to legal charges. But leverage clear.",
+  "Q3'24": "Gross 81.8% | Op 42.7% | Net 38.7%. Op. margin highest in 3 years. AI ad efficiency emerging.",
+  "Q4'24": "Gross 81.7% | Op 48.3% | Net 43.1%. Exceptional Q4 margins. FoA margin ~60%. Best-in-class.",
+  "Q1'25": "Gross 82.1% | Op 41.5% | Net 39.3%. Seasonal decline from Q4. R&D $12.2B +22% YoY.",
+  "Q2'25": "Gross 82.1% | Op 43.0% | Net 38.6%. Strong. SG&A inflection — talent investment stepping up.",
+  "Q3'25": "Gross 82.0% | Op 40.1%. Note: GAAP net margin only 5.3% due to $19B tax accrual reversal. Adj. 36.4%.",
+  "Q4'25": "Gross 81.8% | Op 41.3% | Net 38.0%. +530bps YoY op. margin expansion. RL $(6B) drag absorbed.",
+};
+
+const fcfInsights = {
+  "Q1'24": {fcf:"$12.8B", capex:"$6.4B", insight:"FCF margin 35.2%. CapEx controlled. Low-investment phase yielding high FCF conversion."},
+  "Q2'24": {fcf:"$11.2B", capex:"$8.2B", insight:"FCF margin 28.7%. Buybacks $6.3B. CapEx stepping up with AI data center investments."},
+  "Q3'24": {fcf:"$16.5B", capex:"$8.3B", insight:"FCF margin 40.6% — peak efficiency. CapEx still manageable. Stock repurchases $8.8B."},
+  "Q4'24": {fcf:"$13.6B", capex:"$14.4B", insight:"CapEx jump to $14.4B signals infra ramp beginning. FCF margin 28%. Full year 2024 CapEx $37.3B."},
+  "Q1'25": {fcf:"$11.1B", capex:"$12.9B", insight:"CapEx $12.9B — acceleration confirmed. FCF margin 26.2%. Buybacks $12.8B (front-loaded)."},
+  "Q2'25": {fcf:"$9.0B", capex:"$16.5B", insight:"FCF compression intensifying. CapEx $16.5B — data centers + servers + network infra."},
+  "Q3'25": {fcf:"$11.2B", capex:"$18.8B", insight:"CapEx $18.8B. FCF margin 21.8%. Market started pricing in CapEx overhang. Stock -11% on call."},
+  "Q4'25": {fcf:"$14.1B", capex:"$22.1B", insight:"CapEx $22.1B in a SINGLE quarter. FY2026 guide $115-135B. FCF 23.5% margin. Meta Compute buildout."},
+};
+
+// ── Tooltip logic ─────────────────────────────────────────────────────────────
+const tt = document.getElementById('customTooltip');
+const ttPeriod = document.getElementById('ttPeriod');
+const ttValue = document.getElementById('ttValue');
+const ttVs = document.getElementById('ttVs');
+const ttInsight = document.getElementById('ttInsight');
+
+function showTooltip(e, period, value, vs, insight) {
+  ttPeriod.textContent = period;
+  ttValue.textContent = value;
+  ttVs.textContent = vs || '';
+  ttInsight.textContent = insight || '';
+  tt.style.display = 'block';
+  positionTooltip(e);
+}
+
+function positionTooltip(e) {
+  const x = e.clientX + 16;
+  const y = e.clientY - 60;
+  const w = window.innerWidth;
+  tt.style.left = (x + 320 > w ? x - 340 : x) + 'px';
+  tt.style.top = Math.max(10, y) + 'px';
+}
+
+document.addEventListener('mousemove', (e) => {
+  if (tt.style.display === 'block') positionTooltip(e);
+});
+
+function hideTooltip() { tt.style.display = 'none'; }
+
+// Custom tooltip plugin for Chart.js
+function makeTooltipPlugin(insightData, valueKey) {
+  return {
+    id: 'customHover_' + Math.random(),
+    afterEvent(chart, args) {
+      const e = args.event;
+      if (e.type === 'mousemove') {
+        const pts = chart.getElementsAtEventForMode(e.native, 'nearest', {intersect: true}, true);
+        if (pts.length > 0) {
+          const idx = pts[0].index;
+          const q = quarters[idx];
+          const data = insightData[q];
+          if (data) {
+            const val = typeof data === 'string' ? data : (data[valueKey] || data.value || '');
+            const vs = data.vs || '';
+            const insight = typeof data === 'string' ? data : (data.insight || '');
+            showTooltip(e.native, q, val, vs, insight);
+          }
+        } else {
+          hideTooltip();
+        }
+      } else if (e.type === 'mouseout') {
+        hideTooltip();
+      }
+    }
+  };
+}
+
+// ── Chart 1: Revenue ──────────────────────────────────────────────────────────
+new Chart(document.getElementById('chartRevenue'), {
+  type: 'bar',
+  data: {
+    labels: quarters,
+    datasets: [{
+      label: 'Revenue ($B)',
+      data: [36.5,39.1,40.6,48.4,42.3,47.5,51.2,59.9],
+      backgroundColor: quarters.map((_,i) => i===7 ? TEAL : 'rgba(32,128,141,0.55)'),
+      borderColor: quarters.map((_,i) => i===7 ? TEAL : 'rgba(32,128,141,0.8)'),
+      borderWidth: 1.5,
+      borderRadius: 3,
+    },{
+      label: 'Consensus ($B)',
+      data: [36.2,38.3,40.2,47.0,41.3,44.8,49.5,58.3],
+      type: 'line',
+      borderColor: AMBER,
+      borderDash: [4,3],
+      borderWidth: 1.5,
+      pointRadius: 3,
+      fill: false,
+      tension: 0.2,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {display: true, position: 'top'},
+      tooltip: {enabled: false},
+    },
+    scales: {
+      y: { grid: {color: GRID}, ticks: {callback: v => '$'+v+'B'} },
+      x: { grid: {display: false} }
+    }
+  },
+  plugins: [makeTooltipPlugin(revenueInsights, 'value')]
+});
+
+// ── Chart 2: YoY Growth ───────────────────────────────────────────────────────
+const yoyGrowth = [null,null,null,null,16.1,21.6,26.2,23.8];
+const yoyInsights = {
+  "Q1'25": {value:"+16.1% YoY", vs:"Re-acceleration begins", insight:"After 2024 efficiency focus, 2025 marks the return to growth investment. AI tools beginning to contribute."},
+  "Q2'25": {value:"+21.6% YoY", vs:"Acceleration above 20%", insight:"Q2 2025 was the blow-out quarter: +$2.7B revenue beat. AI ad tooling, Reels growth, and business messaging all firing."},
+  "Q3'25": {value:"+26.2% YoY", vs:"Highest growth rate in 3 years", insight:"Despite stock drop on CapEx, underlying revenue growth +26% YoY is the strongest since 2021. Impression volumes growing across all regions."},
+  "Q4'25": {value:"+23.8% YoY", vs:"Cons +20% | Beat", insight:"Consistent 20%+ growth rate maintained. Record holiday quarter. AI ad improvements driving incremental conversions. Worldwide impressions +18%."},
+};
+
+new Chart(document.getElementById('chartGrowth'), {
+  type: 'line',
+  data: {
+    labels: quarters,
+    datasets: [{
+      label: 'Revenue YoY %',
+      data: [27.3,22.1,18.9,20.6,16.1,21.6,26.2,23.8],
+      borderColor: GREEN,
+      backgroundColor: 'rgba(63,185,80,0.1)',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: quarters.map((_,i) => i>=4 ? GREEN : 'rgba(63,185,80,0.5)'),
+      fill: true,
+      tension: 0.3,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {display: false},
+      tooltip: {enabled: false},
+    },
+    scales: {
+      y: { grid: {color: GRID}, ticks: {callback: v => v+'%'}, min: 0, max: 35 },
+      x: { grid: {display: false} }
+    }
+  },
+  plugins: [makeTooltipPlugin({
+    "Q1'24":{value:"27.3% YoY", vs:"Comp vs weak Q1'23",insight:"Year-over-year growth high due to easy comp. Full-year 2023 was the 'Year of Efficiency' reset."},
+    "Q2'24":{value:"22.1% YoY", vs:"Normalizing", insight:"Healthy 22% growth on tougher comp. Ad market recovering. Reels monetization accelerating."},
+    "Q3'24":{value:"18.9% YoY", vs:"Modest deceleration", insight:"Expected deceleration. CapEx beginning to step up. Impression growth 5%, price +11% in US."},
+    "Q4'24":{value:"20.6% YoY", vs:"Re-acceleration Q4", insight:"Strong holiday quarter. AI ad improvements visible. EPS +65% YoY. FY2024 revenue $164.5B."},
+    "Q1'25":{value:"16.1% YoY", vs:"Seasonal step down", insight:"Seasonal. Revenue $42.3B +16% — healthy underlying. AI hiring accelerating in Q1."},
+    "Q2'25":{value:"21.6% YoY", vs:"$2.7B vs consensus", insight:"Massive beat. Stock +11.3%. Revenue acceleration confirmed. New monetization vectors firing."},
+    "Q3'25":{value:"26.2% YoY", vs:"Highest in 3yr, stock -11%", insight:"Paradox: best revenue growth in years but stock fell on CapEx shock of $115-135B 2026 guide."},
+    "Q4'25":{value:"23.8% YoY", vs:"BEAT vs 20% cons est", insight:"Record holiday quarter. Consistent 20%+ growth. All geography ARPU accelerating. AI compounding."},
+  }, 'value')]
+});
+
+// ── Chart 3: Margins ──────────────────────────────────────────────────────────
+new Chart(document.getElementById('chartMargins'), {
+  type: 'line',
+  data: {
+    labels: quarters,
+    datasets: [
+      {label:'Gross Margin',data:[81.8,81.3,81.8,81.7,82.1,82.1,82.0,81.8],borderColor:TEAL,borderWidth:2,pointRadius:3,fill:false,tension:0.2},
+      {label:'Op. Margin',data:[37.9,38.0,42.7,48.3,41.5,43.0,40.1,41.3],borderColor:BLUE,borderWidth:2,pointRadius:3,fill:false,tension:0.2},
+      {label:'Net Margin (Adj)',data:[33.9,34.5,38.7,43.1,39.3,38.6,36.4,38.0],borderColor:AMBER,borderWidth:1.5,borderDash:[4,3],pointRadius:3,fill:false,tension:0.2},
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {display: true, position:'top'},
+      tooltip: {enabled: false},
+    },
+    scales: {
+      y: {grid:{color:GRID}, ticks:{callback: v=>v+'%'}, min:25, max:90},
+      x: {grid:{display:false}}
+    }
+  },
+  plugins: [makeTooltipPlugin({
+    "Q1'24":{value:"Op 37.9% | Gross 81.8%",insight:marginInsights["Q1'24"]},
+    "Q2'24":{value:"Op 38.0% | Gross 81.3%",insight:marginInsights["Q2'24"]},
+    "Q3'24":{value:"Op 42.7% | Gross 81.8%",insight:marginInsights["Q3'24"]},
+    "Q4'24":{value:"Op 48.3% | Gross 81.7%",insight:marginInsights["Q4'24"]},
+    "Q1'25":{value:"Op 41.5% | Gross 82.1%",insight:marginInsights["Q1'25"]},
+    "Q2'25":{value:"Op 43.0% | Gross 82.1%",insight:marginInsights["Q2'25"]},
+    "Q3'25":{value:"Op 40.1% | Gross 82.0%",insight:marginInsights["Q3'25"]},
+    "Q4'25":{value:"Op 41.3% | Gross 81.8%",insight:marginInsights["Q4'25"]},
+  }, 'value')]
+});
+
+// ── Chart 4: EPS ──────────────────────────────────────────────────────────────
+new Chart(document.getElementById('chartEPS'), {
+  type: 'bar',
+  data: {
+    labels: quarters,
+    datasets: [
+      {label:'Actual EPS',data:[4.71,5.16,6.03,8.02,6.43,7.14,7.25,8.88],backgroundColor:quarters.map((_,i)=>i===7?TEAL:'rgba(32,128,141,0.6)'),borderRadius:3,borderWidth:0},
+      {label:'Consensus EPS',data:[4.50,4.70,5.19,6.68,5.22,5.83,6.61,8.21],type:'line',borderColor:AMBER,borderDash:[4,3],borderWidth:1.5,pointRadius:3,fill:false,tension:0.2}
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins:{legend:{display:true,position:'top'},tooltip:{enabled:false}},
+    scales:{
+      y:{grid:{color:GRID},ticks:{callback:v=>'$'+v}},
+      x:{grid:{display:false}}
+    }
+  },
+  plugins: [makeTooltipPlugin(epsInsights, 'value')]
+});
+
+// ── Chart 5: FCF ──────────────────────────────────────────────────────────────
+new Chart(document.getElementById('chartFCF'), {
+  type: 'bar',
+  data: {
+    labels: quarters,
+    datasets: [
+      {label:'FCF ($B)',data:[12.8,11.2,16.5,13.6,11.1,9.0,11.2,14.1],backgroundColor:'rgba(63,185,80,0.6)',borderRadius:3},
+      {label:'CapEx ($B)',data:[6.4,8.2,8.3,14.4,12.9,16.5,18.8,22.1],backgroundColor:'rgba(248,81,73,0.5)',borderRadius:3},
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top'},tooltip:{enabled:false}},
+    scales:{
+      y:{grid:{color:GRID},ticks:{callback:v=>'$'+v+'B'}},
+      x:{grid:{display:false}}
+    }
+  },
+  plugins:[makeTooltipPlugin({
+    "Q1'24":{value:"FCF $12.8B | CapEx $6.4B",insight:fcfInsights["Q1'24"].insight},
+    "Q2'24":{value:"FCF $11.2B | CapEx $8.2B",insight:fcfInsights["Q2'24"].insight},
+    "Q3'24":{value:"FCF $16.5B | CapEx $8.3B",insight:fcfInsights["Q3'24"].insight},
+    "Q4'24":{value:"FCF $13.6B | CapEx $14.4B",insight:fcfInsights["Q4'24"].insight},
+    "Q1'25":{value:"FCF $11.1B | CapEx $12.9B",insight:fcfInsights["Q1'25"].insight},
+    "Q2'25":{value:"FCF $9.0B | CapEx $16.5B",insight:fcfInsights["Q2'25"].insight},
+    "Q3'25":{value:"FCF $11.2B | CapEx $18.8B",insight:fcfInsights["Q3'25"].insight},
+    "Q4'25":{value:"FCF $14.1B | CapEx $22.1B",insight:fcfInsights["Q4'25"].insight},
+  },'value')]
+});
+
+// ── Chart 6: Balance Sheet ────────────────────────────────────────────────────
+new Chart(document.getElementById('chartBS'), {
+  type: 'line',
+  data: {
+    labels: quarters,
+    datasets:[
+      {label:'Cash+STI ($B)',data:[58.1,58.1,70.9,77.8,70.2,47.1,44.4,81.6],borderColor:BLUE,borderWidth:2,pointRadius:3,fill:false,tension:0.3},
+      {label:'Total Debt ($B)',data:[37.6,38.0,49.0,49.1,49.5,49.6,51.1,83.9],borderColor:RED,borderWidth:2,pointRadius:3,fill:false,tension:0.3},
+      {label:'Net Cash ($B)',data:[20.5,20.1,21.9,28.7,20.7,-2.5,-6.7,-2.3],borderColor:AMBER,borderDash:[4,3],borderWidth:1.5,pointRadius:3,fill:false,tension:0.3},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top'},tooltip:{enabled:false}},
+    scales:{y:{grid:{color:GRID},ticks:{callback:v=>'$'+v+'B'}},x:{grid:{display:false}}}
+  },
+  plugins:[makeTooltipPlugin({
+    "Q1'24":{value:"Cash $58.1B | Debt $37.6B",insight:"Net cash $20.5B. Low leverage. Buybacks $15B in Q1 alone — aggressive capital return."},
+    "Q2'24":{value:"Cash $58.1B | Debt $38.0B",insight:"Net cash $20.1B. Issued $8.5B in bonds for first time since 2022. CapEx ramp begins."},
+    "Q3'24":{value:"Cash $70.9B | Debt $49.0B",insight:"Cash building via operating CF. Debt step-up. Net cash $21.9B. CapEx $8.3B."},
+    "Q4'24":{value:"Cash $77.8B | Debt $49.1B",insight:"Strong Q4 cash generation. Net cash $28.7B — peak. Pre-cursor to CapEx acceleration."},
+    "Q1'25":{value:"Cash $70.2B | Debt $49.5B",insight:"Buybacks $12.8B + CapEx $12.9B = heavy cash usage. Net cash declining."},
+    "Q2'25":{value:"Cash $47.1B | Debt $49.6B",insight:"Net DEBT territory: -$2.5B. CapEx surge eating cash. Buybacks $10.2B in Q2."},
+    "Q3'25":{value:"Cash $44.4B | Debt $51.1B",insight:"Net debt -$6.7B. Minimal buybacks ($3.3B). Preserving cash for infra investment."},
+    "Q4'25":{value:"Cash $81.6B | Debt $83.9B",insight:"Debt issuance! Meta raised $30B in Q4 bonds (net financing +$25.1B) to fund CapEx. Cash $81.6B. Mgmt may maintain 'positive net debt balance.'"},
+  },'value')]
+});
+
+// ── Chart 7: Segment Revenue ──────────────────────────────────────────────────
+new Chart(document.getElementById('chartSegRev'), {
+  type:'bar',
+  data:{
+    labels:quarters,
+    datasets:[
+      {label:'Family of Apps ($B)',data:[36.0,38.7,40.3,47.3,41.9,47.1,50.8,58.9],backgroundColor:'rgba(32,128,141,0.7)',borderRadius:3},
+      {label:'Reality Labs ($B)',data:[0.44,0.35,0.27,1.08,0.41,0.37,0.47,0.96],backgroundColor:'rgba(188,140,255,0.6)',borderRadius:3},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top'},tooltip:{enabled:false}},
+    scales:{
+      y:{grid:{color:GRID},stacked:false,ticks:{callback:v=>'$'+v+'B'}},
+      x:{grid:{display:false}}
+    }
+  },
+  plugins:[makeTooltipPlugin({
+    "Q1'24":{value:"FoA $36.0B | RL $0.44B",insight:"FoA +27% YoY. RL $440M — small but includes Quest VR hardware. RL op loss $(3.8B)."},
+    "Q2'24":{value:"FoA $38.7B | RL $0.35B",insight:"RL revenue declining YoY (-28%) as VR hardware normalized post-Quest 3 launch. FoA accelerating."},
+    "Q3'24":{value:"FoA $40.3B | RL $0.27B",insight:"RL $270M — lowest in 2 years. Quest 3S launch in Q4 will reverse. FoA +21% YoY."},
+    "Q4'24":{value:"FoA $47.3B | RL $1.08B",insight:"RL spike from Quest 3S launch. Holiday hardware sales. RL op loss $(5.0B). FoA margin 59.9%."},
+    "Q1'25":{value:"FoA $41.9B | RL $0.41B",insight:"Seasonal FoA decline normal. RL low — Quest hardware slow Q1. Glasses unit shipments growing."},
+    "Q2'25":{value:"FoA $47.1B | RL $0.37B",insight:"FoA +22% YoY. RL minimal. Retail partners pulling forward Quest units into Q3 for holiday."},
+    "Q3'25":{value:"FoA $50.8B | RL $0.47B",insight:"RL elevated: retailers procuring Quest headsets for holiday = pull-forward into Q3. Glasses 3x."},
+    "Q4'25":{value:"FoA $58.9B | RL $0.96B",insight:"FoA +24.6% YoY. RL -12% YoY (lapping Quest 3S and Q3 pull-forward). RL op loss $(6.0B) — declared PEAK."},
+  },'value')]
+});
+
+// ── Chart 8: Segment Op Income ────────────────────────────────────────────────
+new Chart(document.getElementById('chartSegOI'), {
+  type:'bar',
+  data:{
+    labels:quarters,
+    datasets:[
+      {label:'FoA Op Income ($B)',data:[17.7,19.3,21.8,28.3,21.8,25.0,25.0,30.8],backgroundColor:'rgba(32,128,141,0.7)',borderRadius:3},
+      {label:'RL Op Loss ($B)',data:[-3.8,-4.5,-4.4,-5.0,-4.2,-4.5,-4.4,-6.0],backgroundColor:'rgba(248,81,73,0.5)',borderRadius:3},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top'},tooltip:{enabled:false}},
+    scales:{
+      y:{grid:{color:GRID},ticks:{callback:v=>'$'+v+'B'}},
+      x:{grid:{display:false}}
+    }
+  },
+  plugins:[makeTooltipPlugin({
+    "Q1'24":{value:"FoA $17.7B | RL -$3.8B",insight:"FoA margin 49.1%. RL drag $(3.8B). Consolidated op margin 37.9%."},
+    "Q2'24":{value:"FoA $19.3B | RL -$4.5B",insight:"FoA margin 49.9%. RL losses increasing. Legal charges weigh on SG&A."},
+    "Q3'24":{value:"FoA $21.8B | RL -$4.4B",insight:"FoA margin 54.0% — strong operating leverage from revenue growth. AI helping."},
+    "Q4'24":{value:"FoA $28.3B | RL -$5.0B",insight:"FoA margin 59.9% — exceptional. Holiday demand + AI ad improvements. RL continues investment."},
+    "Q1'25":{value:"FoA $21.8B | RL -$4.2B",insight:"FoA margin 52.0%. RL loss improving slightly YoY. RL strategy pivot to glasses beginning."},
+    "Q2'25":{value:"FoA $25.0B | RL -$4.5B",insight:"FoA margin 53.0%. AI talent hiring beginning to show in expenses. RL steady losses."},
+    "Q3'25":{value:"FoA $25.0B | RL -$4.4B",insight:"FoA margin 49.2%. Higher infra depreciation. RL loss improving slightly. Glasses momentum building."},
+    "Q4'25":{value:"FoA $30.8B | RL -$6.0B",insight:"FoA margin 52.3%. RL loss -$(6.0B) vs -$(5.0B) Q4'24 — elevated legal + talent. DECLARED AS PEAK."},
+  },'value')]
+});
+
+// ── Chart 9: DAP & ARPP ───────────────────────────────────────────────────────
+const dapData = [3240,3270,3290,3350,3430,3480,3540,3580];
+const arppData = [11.2,11.89,12.29,14.25,12.36,13.65,14.46,16.56];
+new Chart(document.getElementById('chartDAP'), {
+  type:'bar',
+  data:{
+    labels:quarters,
+    datasets:[
+      {label:'DAP (MM)',data:dapData,backgroundColor:'rgba(32,128,141,0.55)',borderRadius:3,yAxisID:'y'},
+      {label:'ARPP ($)',data:arppData,type:'line',borderColor:GOLD,borderWidth:2,pointRadius:3,fill:false,tension:0.2,yAxisID:'y2'},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top'},tooltip:{enabled:false}},
+    scales:{
+      y:{grid:{color:GRID},position:'left',ticks:{callback:v=>v.toLocaleString()},min:3000,max:3700},
+      y2:{position:'right',grid:{display:false},ticks:{callback:v=>'$'+v},min:9,max:18},
+      x:{grid:{display:false}}
+    }
+  },
+  plugins:[makeTooltipPlugin({
+    "Q1'24":{value:"DAP 3.24B | ARPP $11.20",insight:"First quarter Meta reported DAP (replacing legacy MAU). DAP 3.24B vs 2022 ~2.8B — +16% in 2 years. ARPP monetization just beginning."},
+    "Q2'24":{value:"DAP 3.27B | ARPP $11.89",insight:"DAP +0.9% QoQ — steady growth. ARPP improving +6.2% QoQ. US/Canada ARPU highest globally. Engagement improvements from Reels."},
+    "Q3'24":{value:"DAP 3.29B | ARPP $12.29",insight:"DAP +0.6% QoQ. ARPP +3.4% QoQ. Impression volumes growing 5% globally; price/ad +11% in US. AI ranking improvements visible."},
+    "Q4'24":{value:"DAP 3.35B | ARPP $14.25",insight:"Holiday ARPP spike normal. +$2/person vs Q3 — impressive. FoA other revenue (WA paid, Meta Verified) scaling."},
+    "Q1'25":{value:"DAP 3.43B | ARPP $12.36",insight:"DAP +2.4% YoY acceleration. Meta AI reaching 900M+ MAU. New surfaces (Edits, Threads) driving incremental engagement."},
+    "Q2'25":{value:"DAP 3.48B | ARPP $13.65",insight:"DAP +6.4% YoY. ARPP +14.8% YoY — accelerating monetization per person. Video generation and AI creative tools driving conversion."},
+    "Q3'25":{value:"DAP 3.54B | ARPP $14.46",insight:"DAP +7.6% YoY. ARPP +17.7% YoY. FB and WA individually >2B DAU/day — milestone not highlighted enough in coverage."},
+    "Q4'25":{value:"DAP 3.58B | ARPP $16.56",insight:"DAP 3.58B (+6.8% YoY). ARPP $16.56 (+16.2% YoY). Holiday boost + AI monetization. >3.5B people using at least one app daily per management."},
+  },'value')]
+});
+
+// ── Chart 10: Ad KPIs ─────────────────────────────────────────────────────────
+new Chart(document.getElementById('chartAdKPIs'), {
+  type:'bar',
+  data:{
+    labels:quarters,
+    datasets:[
+      {label:'Impression Growth YoY%',data:[20,10,5,6,5,11,14,18],backgroundColor:'rgba(88,166,255,0.6)',borderRadius:3},
+      {label:'Price/Ad Growth YoY%',data:[6,10,11,14,10,9,10,6],backgroundColor:'rgba(255,166,87,0.6)',borderRadius:3},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top'},tooltip:{enabled:false}},
+    scales:{
+      y:{grid:{color:GRID},ticks:{callback:v=>v+'%'},min:0,max:25},
+      x:{grid:{display:false}}
+    }
+  },
+  plugins:[makeTooltipPlugin({
+    "Q1'24":{value:"Impressions +20% | Price +6%",insight:"Strong impression growth (+20%) was the driver in early 2024. Price was lagging. Volume expansion = user growth + Reels adoption."},
+    "Q2'24":{value:"Impressions +10% | Price +10%",insight:"Balanced growth: both legs contributing equally. Instagram and Facebook Reels driving incremental impression inventory."},
+    "Q3'24":{value:"Impressions +5% | Price +11%",insight:"Impression volume moderated but price accelerated — AI-driven targeting improving ad value. ROI improvement is monetization, not just volume."},
+    "Q4'24":{value:"Impressions +6% | Price +14%",insight:"Holiday season: price/ad +14% driven by advertiser demand + improved ad performance. AI auction improvements driving premium."},
+    "Q1'25":{value:"Impressions +5% | Price +10%",insight:"Steady state. Impression growth constrained by user base growth limits. Price compensates. AI ranking models improving CPMs."},
+    "Q2'25":{value:"Impressions +11% | Price +9%",insight:"Volume re-acceleration: +11%. New ad surfaces (Threads testing, WA Status piloting) adding inventory. AI creative driving conversions."},
+    "Q3'25":{value:"Impressions +14% | Price +10%",insight:"Dual acceleration. Asia-Pacific impressions +23% YoY — EM markets monetizing faster. US Click-to-Message +50% YoY."},
+    "Q4'25":{value:"Impressions +18% | Price +6%",insight:"Impressions surge +18% — strongest since Q1'24. Driven by engagement improvements (Reels ranking, feed quality) + ad load optimization. Price growth moderated to +6% — mix shift to higher-impression, lower-CPM markets."},
+  },'value')]
+});
+
+// ── Chart 11: Geography ───────────────────────────────────────────────────────
+new Chart(document.getElementById('chartGeo'), {
+  type:'doughnut',
+  data:{
+    labels:['US & Canada ($25.6B)','Europe ($14.2B)','Asia-Pacific ($10.9B)','Rest of World ($7.4B)'],
+    datasets:[{
+      data:[25.6,14.2,10.9,7.4],
+      backgroundColor:[TEAL,'rgba(88,166,255,0.8)','rgba(255,166,87,0.8)','rgba(188,140,255,0.7)'],
+      borderColor:['#0e1117'],
+      borderWidth:2,
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:true,position:'right',labels:{font:{size:10}}},
+      tooltip:{
+        callbacks:{
+          label: ctx => {
+            const pcts = [44.1,24.4,18.7,12.7];
+            const yoys = ['+22%','+27%','+21%','+32%'];
+            return `${ctx.label}: ${pcts[ctx.dataIndex]}% of mix | YoY: ${yoys[ctx.dataIndex]}`;
+          }
+        }
+      }
+    },
+    cutout:'60%',
+  }
+});
+
+// ── Chart 12: Forward Estimates ────────────────────────────────────────────────
+new Chart(document.getElementById('chartEstimates'), {
+  type:'bar',
+  data:{
+    labels:['Q1\'26E','Q2\'26E','Q3\'26E','Q4\'26E','FY26E','FY27E'],
+    datasets:[
+      {label:'Rev Estimate ($B)',data:[55.5,59.6,62.9,73.0,250.8,296.1],backgroundColor:'rgba(32,128,141,0.55)',borderRadius:3,yAxisID:'y'},
+      {label:'EPS Estimate ($)',data:[9.48,10.70,10.47,11.97,42.62,51.75],type:'line',borderColor:AMBER,borderWidth:2,pointRadius:4,fill:false,tension:0.2,yAxisID:'y2'},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top'},tooltip:{
+      callbacks:{
+        label: ctx => {
+          if(ctx.dataset.label.includes('EPS')) return `EPS: $${ctx.raw}`;
+          return `Rev: $${ctx.raw}B`;
+        }
+      }
+    }},
+    scales:{
+      y:{grid:{color:GRID},position:'left',ticks:{callback:v=>'$'+v+'B'},title:{display:true,text:'Revenue ($B)',color:'#8b949e'}},
+      y2:{position:'right',grid:{display:false},ticks:{callback:v=>'$'+v},min:0,max:60},
+      x:{grid:{display:false}}
+    }
+  }
+});
+</script>
+
+</body>
+</html>
